@@ -6,15 +6,19 @@ This repository contains a lightweight browser app and a reusable notebook templ
 
 1. Students fill out the experiment notebook before leaving the lab.
 2. Students submit the notebook through a GitHub Issue link.
-3. The advisor records submitted notebooks, tracks review status, and exports the log.
+3. GitHub Actions sync submitted notebooks into central `records/` files.
 
 ## Files
 
 - `index.html`: standalone lab-note tracking app.
-- `app.js`: template generation, GitHub submission link generation, and local record storage.
+- `app.js`: template generation, GitHub submission link generation, and central record display.
 - `styles.css`: app styling.
 - `templates/daily-experiment-notebook.md`: student-facing notebook template.
 - `.github/ISSUE_TEMPLATE/experiment-notebook.md`: GitHub issue template for submitted notebooks.
+- `.github/workflows/sync-records.yml`: updates central record files whenever notebook issues change.
+- `records/records.json`: central machine-readable notebook registry.
+- `records/records.csv`: spreadsheet-friendly central notebook registry.
+- `records/records.md`: readable central notebook archive.
 
 ## Local Use
 
@@ -36,7 +40,7 @@ The app generates a GitHub Issue URL for:
 https://github.com/Sun-code2026/MSCSL-Lab-note/issues/new
 ```
 
-Students can paste their completed notebook into the generated issue. The advisor can then copy the issue URL into the registry section of the app.
+Students can paste their completed notebook into the generated issue. After the issue is submitted, GitHub Actions updates the central registry files under `records/`.
 
 ## Where Notes Are Stored
 
@@ -46,11 +50,19 @@ Submitted lab notebook contents are stored as GitHub Issues in this repository:
 https://github.com/Sun-code2026/MSCSL-Lab-note/issues
 ```
 
-The browser app's registry table stores only tracking metadata in the current browser's `localStorage`: student, date, project, issue URL, review status, and advisor comment. Export the table as CSV if you need a portable backup.
+The central registry is stored in this repository:
+
+```text
+records/records.json
+records/records.csv
+records/records.md
+```
+
+The browser app reads `records/records.json`, so every computer sees the same central record after GitHub Actions finishes syncing. No submission records are stored only on the student's computer.
 
 ## Advisor Backup
 
-For stable operation, treat GitHub Issues as the central storage and periodically export them on the advisor's computer.
+For an additional offline backup, export all GitHub Issues on the advisor's computer.
 
 Run:
 
@@ -72,5 +84,5 @@ See `scripts/README.md` for details.
 1. Before leaving the lab, the student opens the template.
 2. The student records the day's schedule, performed experiments, results, files, blockers, and next plan.
 3. The student creates a GitHub Issue using the generated submission link.
-4. The advisor reviews the issue and records it in the tracker.
-5. The advisor marks status as `submitted`, `reviewed`, `needs revision`, or `closed`.
+4. GitHub Actions writes the central files under `records/`.
+5. The advisor reviews the issue and can use labels such as `reviewed` or `needs-revision` to update central status.

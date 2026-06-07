@@ -1,6 +1,7 @@
 const REPO_URL = 'https://github.com/Sun-code2026/MSCSL-Lab-note';
 const ISSUES_URL = `${REPO_URL}/issues/new`;
-const STORAGE_KEY = 'mscsl.labNote.records';
+const RECORDS_JSON_URL = 'https://raw.githubusercontent.com/Sun-code2026/MSCSL-Lab-note/master/records/records.json';
+const RECORDS_CSV_URL = 'https://raw.githubusercontent.com/Sun-code2026/MSCSL-Lab-note/master/records/records.csv';
 
 const fields = {
   studentName: document.querySelector('#studentName'),
@@ -11,9 +12,8 @@ const fields = {
   issueUrl: document.querySelector('#issueUrl'),
   openIssueLink: document.querySelector('#openIssueLink'),
   recordIssueUrl: document.querySelector('#recordIssueUrl'),
-  recordStatus: document.querySelector('#recordStatus'),
-  advisorComment: document.querySelector('#advisorComment'),
   recordsBody: document.querySelector('#recordsBody'),
+  recordsMeta: document.querySelector('#recordsMeta'),
   message: document.querySelector('#message'),
 };
 
@@ -151,39 +151,15 @@ function createIssueUrl() {
   showMessage('GitHub 제출 링크를 만들었습니다.');
 }
 
-function loadRecords() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-}
-
-function saveRecords(records) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
-
-function saveRecord() {
-  const record = {
-    id: crypto.randomUUID(),
-    date: fields.submissionDate.value || today(),
-    student: fields.studentName.value.trim(),
-    project: fields.projectTitle.value.trim(),
-    issueUrl: fields.recordIssueUrl.value.trim(),
-    status: fields.recordStatus.value,
-    comment: fields.advisorComment.value.trim(),
-    createdAt: new Date().toISOString(),
-  };
-
-  if (!record.student || !record.project || !record.issueUrl) {
-    showMessage('학생 이름, 프로젝트, GitHub Issue URL은 필수입니다.');
-    return;
+async function loadCentralRecords() {
+  const response = await fetch(`${RECORDS_JSON_URL}?t=${Date.now()}`, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('중앙 기록 파일을 불러오지 못했습니다.');
   }
-
-  const records = [record, ...loadRecords()];
-  saveRecords(records);
-  renderRecords();
-  showMessage('제출 기록을 저장했습니다.');
+  return response.json();
 }
 
-function renderRecords() {
-  const records = loadRecords();
+function renderRecords(records, meta = {}) {
   fields.recordsBody.innerHTML = records
     .map(
       (record) => `<tr>
@@ -191,21 +167,29 @@ function renderRecords() {
         <td>${escapeHtml(record.student)}</td>
         <td>${escapeHtml(record.project)}</td>
         <td><span class="statusPill">${escapeHtml(record.status)}</span></td>
-        <td><a href="${escapeAttribute(record.issueUrl)}" target="_blank" rel="noreferrer">open</a></td>
-        <td>${escapeHtml(record.comment || '-')}</td>
+        <td><a href="${escapeAttribute(record.url)}" target="_blank" rel="noreferrer">open</a></td>
+        <td>${escapeHtml((record.labels || []).join(', ') || '-')}</td>
       </tr>`,
     )
     .join('');
+
+  fields.recordsMeta.textContent = `중앙 기록 ${records.length}건${meta.generatedAt ? ` · 마지막 동기화 ${meta.generatedAt}` : ''}`;
 }
 
-function exportRecords() {
-  const records = loadRecords();
-  const header = ['date', 'student', 'project', 'status', 'issueUrl', 'comment', 'createdAt'];
-  const rows = records.map((record) =>
-    header.map((key) => `"${String(record[key] || '').replaceAll('"', '""')}"`).join(','),
-  );
-  const csv = [header.join(','), ...rows].join('\n');
-  downloadText('mscsl-lab-note-records.csv', csv);
+async function refreshCentralRecords() {
+  try {
+    fields.recordsBody.innerHTML = '<tr><td colspan="6">중앙 기록을 불러오는 중입니다.</td></tr>';
+    const data = await loadCentralRecords();
+    renderRecords(data.records || [], data);
+    showMessage('GitHub repo의 중앙 기록을 불러왔습니다.');
+  } catch (error) {
+    fields.recordsBody.innerHTML = '<tr><td colspan="6">중앙 기록을 불러오지 못했습니다.</td></tr>';
+    showMessage(error instanceof Error ? error.message : '중앙 기록을 불러오지 못했습니다.');
+  }
+}
+
+function downloadCentralCsv() {
+  window.open(RECORDS_CSV_URL, '_blank', 'noopener,noreferrer');
 }
 
 function escapeHtml(value) {
@@ -223,7 +207,7 @@ function escapeAttribute(value) {
 
 fields.submissionDate.value = today();
 refreshTemplate();
-renderRecords();
+refreshCentralRecords();
 
 document.querySelector('#refreshTemplateButton').addEventListener('click', refreshTemplate);
 document.querySelector('#copyTemplateButton').addEventListener('click', () => copyText(fields.notebookText.value, '템플릿을 복사했습니다.'));
@@ -232,6 +216,5 @@ document.querySelector('#downloadTemplateButton').addEventListener('click', () =
 });
 document.querySelector('#createIssueLinkButton').addEventListener('click', createIssueUrl);
 document.querySelector('#copyIssueUrlButton').addEventListener('click', () => copyText(fields.issueUrl.value, 'GitHub 제출 링크를 복사했습니다.'));
-document.querySelector('#saveRecordButton').addEventListener('click', saveRecord);
-document.querySelector('#exportRecordsButton').addEventListener('click', exportRecords);
-
+document.querySelector('#refreshRecordsButton').addEventListener('click', refreshCentralRecords);
+document.querySelector('#exportRecordsButton').addEventListener('click', downloadCentralCsv);

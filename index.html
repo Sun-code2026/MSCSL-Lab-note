@@ -32,7 +32,7 @@
         <article class="stepCard">
           <span>3</span>
           <strong>제출 기록</strong>
-          <p>보내준 실험노트북을 기록하고 상태, 코멘트, 링크를 관리합니다.</p>
+          <p>GitHub Issues에서 자동 생성된 중앙 기록 파일을 불러옵니다.</p>
         </article>
       </section>
 
@@ -87,32 +87,18 @@
         <div class="panelHeader">
           <div>
             <h2>3. 제출된 실험노트북 기록</h2>
-            <p>학생이 보내준 GitHub Issue 링크와 지도 코멘트를 저장합니다. 기록은 이 브라우저의 localStorage에 보관됩니다.</p>
+            <p id="recordsMeta">중앙 기록을 불러오는 중입니다.</p>
           </div>
           <div class="buttonGroup compact">
-            <button id="saveRecordButton" type="button">기록 저장</button>
-            <button id="exportRecordsButton" type="button" class="secondary">CSV 내보내기</button>
+            <button id="refreshRecordsButton" type="button">중앙 기록 새로고침</button>
+            <button id="exportRecordsButton" type="button" class="secondary">records.csv 열기</button>
           </div>
         </div>
 
-        <div class="recordForm">
-          <label>
-            GitHub Issue URL
-            <input id="recordIssueUrl" placeholder="https://github.com/.../issues/1" />
-          </label>
-          <label>
-            상태
-            <select id="recordStatus">
-              <option>submitted</option>
-              <option>reviewed</option>
-              <option>needs revision</option>
-              <option>closed</option>
-            </select>
-          </label>
-          <label class="wide">
-            지도 코멘트
-            <textarea id="advisorComment" placeholder="오늘 노트북에 대한 코멘트, 수정 요청, 다음 액션을 기록하세요."></textarea>
-          </label>
+        <div class="centralStorageNote">
+          학생이 GitHub Issue로 제출하면 GitHub Actions가 <code>records/records.json</code>,
+          <code>records/records.csv</code>, <code>records/records.md</code>를 자동으로 갱신합니다.
+          어느 컴퓨터에서 열어도 같은 중앙 기록을 봅니다.
         </div>
 
         <div class="tableWrap">
@@ -124,7 +110,7 @@
                 <th>프로젝트</th>
                 <th>상태</th>
                 <th>Issue</th>
-                <th>코멘트</th>
+                <th>Labels</th>
               </tr>
             </thead>
             <tbody id="recordsBody"></tbody>
@@ -136,4 +122,3 @@
     <script src="./app.js"></script>
   </body>
 </html>
-
