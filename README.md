@@ -48,6 +48,25 @@ https://github.com/Sun-code2026/MSCSL-Lab-note/issues
 
 The browser app's registry table stores only tracking metadata in the current browser's `localStorage`: student, date, project, issue URL, review status, and advisor comment. Export the table as CSV if you need a portable backup.
 
+## Advisor Backup
+
+For stable operation, treat GitHub Issues as the central storage and periodically export them on the advisor's computer.
+
+Run:
+
+```bash
+node scripts/backup-issues.mjs
+```
+
+This creates a timestamped folder under `backups/` with:
+
+- `issues.json` for full machine-readable backup.
+- `issues.csv` for Excel or Google Sheets.
+- `issues.md` for a combined readable archive.
+- one Markdown file per submitted notebook.
+
+See `scripts/README.md` for details.
+
 ## Suggested Daily Routine
 
 1. Before leaving the lab, the student opens the template.
